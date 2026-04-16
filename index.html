@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>AFL Scoreboard</title>
+
+<style>
+.goalOverlay{
+  position:absolute;
+  left:-100%;
+  top:0;
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  pointer-events:none;
+  opacity:0;
+}
+
+.goalHome{
+  font-size:350px;
+  font-weight:bold;
+  color:rgb(255, 0, 0);
+  letter-spacing:10px;
+  background:#000dff;
+}
+
+.goalAway{
+    font-size:300px;
+  font-weight:bold;
+  color:rgb(255, 255, 255);
+  letter-spacing:2px;
+  background:#606060;
+}
+
+body{
+  margin:0;
+  background:black;
+  font-family:Arial, Helvetica, sans-serif;
+  overflow:hidden;
+  cursor:none;
+}
+
+#scoreboard{
+  width:1920px;
+  height:1080px;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ROWS */
+.row{
+  display:flex;
+  width:100%;
+  position:relative;
+  overflow:hidden;
+}
+
+#homeRow{
+  height:40%;
+  background:#000000;
+}
+
+#awayRow{
+  height:40%;
+  background:#000000; 
+}
+
+#gameRow{
+  height:20%;
+  background:black;
+  color:rgb(255, 253, 138);
+  display:flex;
+}
+
+.gameSection{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+#quarter{font-size:180px;}
+#clock{font-size:200px;}
+
+.glowText {
+  text-shadow:
+    0 0 10px rgba(255,255,255,0.8),
+    0 0 25px rgba(255,255,255,0.6),
+    0 0 50px rgba(255,255,255,0.4);
+}
+
+/* RATIO 1:1:1:2 */
+.logo{flex:1; display:flex; align-items:center; justify-content:center;}
+.goals,.behinds{flex:1; display:flex; align-items:center; justify-content:center; font-size:330px; font-weight:bold; color:white; line-height:1;}
+.total{flex:2; display:flex; align-items:center; justify-content:center; font-size:420px; font-weight:bold; color:white; line-height:1;}
+.logo img{max-width:100%; max-height:100%;}
+
+/* SCORE PULSE */
+@keyframes scorePulse{
+  0%{transform:scale(1);}
+  50%{transform:scale(1.2);}
+  100%{transform:scale(1);}
+}
+.pulse{
+  animation:scorePulse 1s ease;
+}
+
+/* GOAL FLASH 
+@keyframes goalFlashHome{
+  0%{transform:scale(1); background:inherit;}
+  30%{transform:scale(1.15); background:#FFD700;}
+  100%{transform:scale(1);}
+}
+@keyframes goalFlashAway{
+  0%{transform:scale(1); background:inherit;}
+  30%{transform:scale(1.1); background:#666;}
+  100%{transform:scale(1);}
+}
+.goalAnimationHome{animation:goalFlashHome .8s ease;}
+.goalAnimationAway{animation:goalFlashAway .8s ease;} */
+
+@keyframes goalSlide {
+  0%   { left:-100%; opacity:0; }
+  10%  { opacity:1; }
+  50%  { left:0%; opacity:1; }
+  90%  { opacity:1; }
+  100% { left:100%; opacity:0; }
+}
+
+.goalAnimate{
+  animation: goalSlide 6s ease;
+}
+
+.goalOverlay{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+.goalText{
+  font-size:400px; /* your big text */
+  font-weight:bold;
+}
+
+.goalOverlay{
+  display:flex;
+  flex-direction:row;          /* 👈 THIS is the key change */
+  align-items:center;          /* vertical alignment */
+  justify-content:center;
+  gap:40px;                   /* space between text and image */
+}
+
+.goalText{
+  font-size:320px;
+  font-weight:bold;
+}
+
+.goalImage{
+  width:300px;   /* adjust size */
+  height:auto;
+}
+
+#awayRow::after{
+  content:"";
+  position:absolute;
+  bottom:0;              /* sits at bottom of away row */
+  left:0;
+  width:100%;
+  height:6px;            /* thickness of the line */
+  background:white;
+}
+
+</style>
+</head>
+<body>
+
+<div id="scoreboard">
+
+  <div id="homeRow" class="row">
+
+  <div class="goalOverlay" id="homeGoalOverlay">
+    <img class="goalImage" src="Files/BarossaLogo.png">
+    <span class="goalText">GOAL!</span>
+    <img class="goalImage" src="Files/BarossaLogo.png">
+  </div>
+
+
+    <div class="logo">
+      <img id="homeLogo">
+    </div>
+
+    <div class="goals" id="homeGoals">0</div>
+    <div class="behinds" id="homeBehinds">0</div>
+    <div class="total" id="homeTotal">0</div>
+
+  </div>
+
+  <div id="awayRow" class="row">
+
+    <div class="goalOverlay" id="awayGoalOverlay">GOAL</div>
+
+    <div class="logo">
+      <img id="awayLogo">
+    </div>
+
+    <div class="goals" id="awayGoals">0</div>
+    <div class="behinds" id="awayBehinds">0</div>
+    <div class="total" id="awayTotal">0</div>
+
+  </div>
+
+  <div id="gameRow">
+    <div class="gameSection"></div>
+    <div class="gameSection"><div id="quarter">Q1</div></div>
+    <div class="gameSection"><div id="clock">20:00</div></div>
+  </div>
+
+</div>
+
+<script>
+
+// --- Protection (obfuscated|base64-encoded) ---
+const encodedPassword = "QnVsbGRvZ3NTY29yZXM=";
+
+function decodeBase64(str) {
+  return atob(str);
+}
+
+const entered = prompt("Enter password to access Footy Scoreboard:");
+if (entered !== decodeBase64(encodedPassword)) {
+  alert("Incorrect password. Access denied.");
+  document.body.innerHTML = "<h1 style='color:white;text-align:center;margin-top:20%'>Access Denied</h1>";
+  throw new Error("Unauthorized access blocked.");
+}
+
+/* FULLSCREEN */
+function goFullscreen(){
+  let elem=document.documentElement;
+  if(elem.requestFullscreen){ elem.requestFullscreen(); }
+}
+document.addEventListener("keydown", goFullscreen, { once:true });
+document.addEventListener("click", goFullscreen, { once:true });
+
+/* SCORE DATA */
+let homeGoals=0, homeBehinds=0, awayGoals=0, awayBehinds=0;
+
+/* CLOCK */
+let clockSeconds=1200, timer=null;
+window.countDown = true;
+function formatTime(sec){ let m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+
+function updateClock(){
+  document.getElementById("clock").innerText = formatTime(clockSeconds);
+
+  if(control && !control.closed && control.document && control.document.getElementById("controlClock")){
+    control.document.getElementById("controlClock").innerText = formatTime(clockSeconds);
+  }
+}
+
+function tick(){ if(window.countDown){ clockSeconds--; if(clockSeconds<0)clockSeconds=0;} else{ clockSeconds++; } updateClock();}
+function startClock(){ if(timer)return; timer=setInterval(tick,1000); }
+function stopClock(){ clearInterval(timer); timer=null; }
+function resetClock(sec){ clockSeconds=sec; updateClock(); }
+
+/* SCORING */
+function calcTotal(g,b){ return g*6+b; }
+function pulse(id){ let el=document.getElementById(id); el.classList.remove("pulse"); void el.offsetWidth; el.classList.add("pulse"); }
+
+function refreshScores(){
+  document.getElementById("homeGoals").innerText=homeGoals;
+  document.getElementById("homeBehinds").innerText=homeBehinds;
+  document.getElementById("homeTotal").innerText=calcTotal(homeGoals,homeBehinds);
+  document.getElementById("awayGoals").innerText=awayGoals;
+  document.getElementById("awayBehinds").innerText=awayBehinds;
+  document.getElementById("awayTotal").innerText=calcTotal(awayGoals,awayBehinds);
+
+  // Mirror on control panel
+  if(control && !control.closed){
+    control.document.getElementById("controlHomeGoals").innerText=homeGoals;
+    control.document.getElementById("controlHomeBehinds").innerText=homeBehinds;
+    control.document.getElementById("controlHomeTotal").innerText=calcTotal(homeGoals,homeBehinds);
+    control.document.getElementById("controlAwayGoals").innerText=awayGoals;
+    control.document.getElementById("controlAwayBehinds").innerText=awayBehinds;
+    control.document.getElementById("controlAwayTotal").innerText=calcTotal(awayGoals,awayBehinds);
+  }
+}
+
+/* SCORE CHANGE */
+function changeScore(team,type,amount){
+
+  // ---------------- HOME ----------------
+  if(team=="home"){
+
+    if(type=="goal"){
+
+      homeGoals = Math.max(0, homeGoals + amount);
+
+      if(amount > 0){
+        showGoal(team);
+
+        setTimeout(() => {
+
+          refreshScores();
+
+          pulse("homeGoals");
+          pulse("homeTotal");
+
+          let el = document.getElementById("homeTotal");
+          el.classList.add("goalAnimationHome");
+          setTimeout(() => {
+            el.classList.remove("goalAnimationHome");
+          }, 800);
+
+        }, 5000); // must match overlay duration
+
+        return;
+      }
+
+    }
+
+    if(type=="behind"){
+      homeBehinds = Math.max(0, homeBehinds + amount);
+      pulse("homeBehinds");
+      pulse("homeTotal");
+    }
+  }
+
+  // ---------------- AWAY ----------------
+  if(team=="away"){
+
+    if(type=="goal"){
+
+      awayGoals = Math.max(0, awayGoals + amount);
+
+      if(amount > 0){
+        showGoal(team);
+
+        setTimeout(() => {
+
+          refreshScores();
+
+          pulse("awayGoals");
+          pulse("awayTotal");
+
+          let el = document.getElementById("awayTotal");
+          el.classList.add("goalAnimationAway");
+          setTimeout(() => {
+            el.classList.remove("goalAnimationAway");
+          }, 800);
+
+        }, 5000); // must match overlay duration
+
+        return;
+      }
+
+    }
+
+    if(type=="behind"){
+      awayBehinds = Math.max(0, awayBehinds + amount);
+      pulse("awayBehinds");
+      pulse("awayTotal");
+    }
+  }
+
+  // ---------------- NON-GOAL UPDATES ----------------
+  refreshScores();
+}
+
+function showGoal(team){
+  const overlay = document.getElementById(team + "GoalOverlay");
+
+  // remove old state
+  overlay.classList.remove("goalAnimate", "goalHome", "goalAway");
+
+  // set correct background
+  overlay.classList.add(team === "home" ? "goalHome" : "goalAway");
+
+  // restart animation
+  void overlay.offsetHeight;
+  overlay.classList.add("goalAnimate");
+
+  setTimeout(() => {
+    overlay.classList.remove("goalAnimate");
+  }, 5000); // match slower timing if you increased duration
+}
+
+/* OTHER SETTINGS */
+function updateQuarter(q){ document.getElementById("quarter").innerText=q; if(control && !control.closed){ control.document.getElementById("controlQuarter").innerText=q; } }
+function setLogo(team,file){ document.getElementById(team+"Logo").src="Files/"+file; if(control && !control.closed){ control.document.getElementById("control"+team.charAt(0).toUpperCase()+team.slice(1)+"Logo").src="Files/"+file; } }
+const darkColors={ darkred:"#8B0000", lightred:"#da4242", orange:"#B34700", yellow:"#B3A000", green:"#006400", cyan:"#008B8B", darkblue:"#00008B", lightblue:"#1565c0", purple:"#4B0082", magenta:"#8B008B", pink:"#B03060", brown:"#5C4033", darkgrey:"#444444", lightgrey:"#777777", black: "#000000" };
+function setColor(team,color){ document.getElementById(team+"Row").style.background=darkColors[color]; if(control && !control.closed){ control.document.getElementById("control"+team.charAt(0).toUpperCase()+team.slice(1)+"Row").style.background=darkColors[color]; } }
+
+/* CONTROL PANEL */
+let control=null;
+function openControl(){
+  control = window.open("", "control", "width=900,height=800");
+  control.document.write(`
+<style>
+body{background:#1b1b1b;font-family:Arial;color:white;margin:10px;}
+h2{text-align:center;}
+.panel{background:#2a2a2a;border-radius:10px;padding:10px;margin-bottom:10px;}
+button{font-size:32px;padding:6px 10px;margin:3px;border:none;border-radius:5px;cursor:pointer;}
+.plus{background:#4CAF50;color:white;}
+.minus{background:#c62828;color:white;}
+select,input{font-size:14px;padding:3px;margin-top:3px;}
+.controlRow{margin-top:6px;}
+.clockButtons button{background:#1976d2;color:white;}
+.mirrorScore{display:flex; flex-direction:column; margin-bottom:10px; font-family:Arial; color:white;}
+.rowMirror{display:flex; flex-direction:row; margin:2px 0; font-size:36px; font-weight:bold; align-items:center;}
+.rowMirror .logo{width:60px; display:flex; justify-content:center; align-items:center;}
+.rowMirror .score{flex:1; display:flex; justify-content:center; align-items:center;}
+.rowMirror .total{flex:2; display:flex; justify-content:center; align-items:center;}
+.rowMirror img{max-width:50px; max-height:50px;}
+.flexHorizontal{display:flex; gap:10px;}
+.flexHorizontal > .panel{flex:1;}
+
+.panel{
+  background:#2a2a2a;
+  border-radius:10px;
+  padding:10px;
+  margin-bottom:10px;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;   /* 👈 THIS CENTRES EVERYTHING */
+}
+
+  .controlRow{
+  margin-top:6px;
+  text-align:center;    /* 👈 centres labels + buttons */
+}
+
+.controlRow button{
+  margin:3px;
+}
+
+select{
+  display:block;
+  margin:5px auto;   /* 👈 centres dropdown */
+}
+
+</style>
+<h2>AFL Scoreboard Control</h2>
+
+<!-- MIRRORED SCOREBOARD -->
+<div class="mirrorScore">
+  <div class="rowMirror" id="controlHomeRow">
+    <div class="logo"><img id="controlHomeLogo"></div>
+    <div class="score" id="controlHomeGoals">0</div>
+    <div class="score" id="controlHomeBehinds">0</div>
+    <div class="total" id="controlHomeTotal">0</div>
+  </div>
+  <div class="rowMirror" id="controlAwayRow">
+    <div class="logo"><img id="controlAwayLogo"></div>
+    <div class="score" id="controlAwayGoals">0</div>
+    <div class="score" id="controlAwayBehinds">0</div>
+    <div class="total" id="controlAwayTotal">0</div>
+  </div>
+  <div class="rowMirror">
+    <div class="score">Quarter:</div>
+    <div class="score" id="controlQuarter" colspan="3">Q1</div>
+  </div>
+  <div class="rowMirror">
+    <div class="score">Time:</div>
+    <div class="score" id="controlClock" colspan="3">20:00</div>
+  </div>
+</div>
+
+<!-- HOME & AWAY TEAM PANELS HORIZONTAL -->
+<div class="flexHorizontal">
+  <div class="panel">
+    <h3>Home Team</h3>
+    <div class="controlRow">Goals
+      <button class="plus" onclick="window.opener.changeScore('home','goal',1)">+</button>
+      <button class="minus" onclick="window.opener.changeScore('home','goal',-1)">-</button>
+    </div>
+    <div class="controlRow">Behinds
+      <button class="plus" onclick="window.opener.changeScore('home','behind',1)">+</button>
+      <button class="minus" onclick="window.opener.changeScore('home','behind',-1)">-</button>
+    </div>
+    <div class="controlRow">Logo<br>
+      <select onchange="window.opener.setLogo('home',this.value)">
+        <option value="">Select</option>
+        <option value="Barossa.png">Barossa</option>
+        <option value="BarossaLogo.png">Barossa (Logo)</option>
+        <option value="Angaston.png">Angaston</option>
+        <option value="Freeling.png">Freeling</option>
+        <option value="GawlerCentral.png">Gawler Central</option>
+        <option value="Kapunda.png">Kapunda</option>
+        <option value="Nuri.png">Nurioopta</option>
+        <option value="SouthGawler.png">South Gawler</option>
+        <option value="Tanunda.png">Tanunda</option>
+        <option value="Willaston.png">Willaston</option>
+        <option value="CentralDistricts.png">Central Districts</option>
+        <option value="GenericHome.png">Home</option>
+        <option value="GenericVisitors.png">Visitors</option>
+      </select>
+    </div>
+    <div class="controlRow">Colour<br>
+      <select onchange="window.opener.setColor('home',this.value)">
+        <option value="black">Black</option>
+        <option value="darkblue">Dark Blue</option>
+        <option value="lightblue">Light Blue</option>
+        <option value="darkred">Dark Red</option>
+        <option value="lightred">Light Red</option>
+        <option value="orange">Orange</option>
+        <option value="yellow">Yellow</option>
+        <option value="green">Green</option>
+        <option value="cyan">Cyan</option>
+        <option value="purple">Purple</option>
+        <option value="magenta">Magenta</option>
+        <option value="pink">Pink</option>
+        <option value="brown">Brown</option>
+        <option value="darkgrey">Dark Grey</option>
+        <option value="lightgrey">Light Grey</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Away Team</h3>
+    <div class="controlRow">Goals
+      <button class="plus" onclick="window.opener.changeScore('away','goal',1)">+</button>
+      <button class="minus" onclick="window.opener.changeScore('away','goal',-1)">-</button>
+    </div>
+    <div class="controlRow">Behinds
+      <button class="plus" onclick="window.opener.changeScore('away','behind',1)">+</button>
+      <button class="minus" onclick="window.opener.changeScore('away','behind',-1)">-</button>
+    </div>
+    <div class="controlRow">Logo<br>
+      <select onchange="window.opener.setLogo('away',this.value)">
+        <option value="">Select</option>
+        <option value="Barossa.png">Barossa</option>
+        <option value="BarossaLogo.png">Barossa (Logo)</option>
+        <option value="Angaston.png">Angaston</option>
+        <option value="Freeling.png">Freeling</option>
+        <option value="GawlerCentral.png">Gawler Central</option>
+        <option value="Kapunda.png">Kapunda</option>
+        <option value="Nuri.png">Nurioopta</option>
+        <option value="SouthGawler.png">South Gawler</option>
+        <option value="Tanunda.png">Tanunda</option>
+        <option value="Willaston.png">Willaston</option>
+        <option value="CentralDistricts.png">Central Districts</option>
+        <option value="GenericHome.png">Home</option>
+        <option value="GenericVisitors.png">Visitors</option>
+      </select>
+    </div>
+    <div class="controlRow">Colour<br>
+      <select onchange="window.opener.setColor('away',this.value)">
+        <option value="black">Black</option>
+        <option value="darkblue">Dark Blue</option>
+        <option value="lightblue">Light Blue</option>
+        <option value="darkred">Dark Red</option>
+        <option value="lightred">Light Red</option>
+        <option value="orange">Orange</option>
+        <option value="yellow">Yellow</option>
+        <option value="green">Green</option>
+        <option value="cyan">Cyan</option>
+        <option value="purple">Purple</option>
+        <option value="magenta">Magenta</option>
+        <option value="pink">Pink</option>
+        <option value="brown">Brown</option>
+        <option value="darkgrey">Dark Grey</option>
+        <option value="lightgrey">Light Grey</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- GAME PANEL -->
+<div class="panel">
+<h3>Game</h3>
+<div class="controlRow">Quarter<br>
+  <select onchange="window.opener.updateQuarter(this.value)">
+    <option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option>
+  </select>
+</div>
+<div class="controlRow">Start Time (minutes)<br>
+  <input id="startTime" type="number" value="20">
+</div>
+<div class="controlRow">Direction<br>
+  <select onchange="window.opener.countDown = (this.value === 'down');">
+    <option value="down">Count Down</option>
+    <option value="up">Count Up</option>
+  </select>
+</div>
+<div class="clockButtons controlRow">
+  <button onclick="let t=document.getElementById('startTime').value; window.opener.resetClock(t*60)">Set Time</button>
+  <button onclick="window.opener.startClock()">Start</button>
+  <button onclick="window.opener.stopClock()">Stop</button>
+</div>
+<div class="footer-text" style="margin-top: 20px;">acamapps (C) 2026</div>
+</div>
+`);
+}
+
+/* INIT */
+updateClock();
+window.addEventListener("load", () => {
+  setTimeout(openControl, 300);
+});
+</script>
+
+</body>
+</html>
