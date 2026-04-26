@@ -179,6 +179,12 @@ body{
   background:white;
 }
 
+.gameImage {
+  width: 520px;        /* set exactly what you want */
+  height: 260px;       /* or auto if you want to preserve ratio */
+  object-fit: contain;
+}
+
 </style>
 </head>
 <body>
@@ -219,7 +225,9 @@ body{
   </div>
 
   <div id="gameRow">
-    <div class="gameSection"></div>
+    <div class="gameSection">
+      <img src="Files/BPlogo.png" alt="Barossa Park" class="gameImage">
+    </div>
     <div class="gameSection"><div id="quarter">Q1</div></div>
     <div class="gameSection"><div id="clock">20:00</div></div>
   </div>
@@ -229,14 +237,14 @@ body{
 <script>
 
 // --- Protection (obfuscated|base64-encoded) ---
-const encodedPassword = "QnVsbGRvZ3NTY29yZXM=";
+const encPass = "RG9nZ2llc1Njb3JpbmdCUA==";
 
 function decodeBase64(str) {
   return atob(str);
 }
 
 const entered = prompt("Enter password to access Footy Scoreboard:");
-if (entered !== decodeBase64(encodedPassword)) {
+if (entered !== decodeBase64(encPass)) {
   alert("Incorrect password. Access denied.");
   document.body.innerHTML = "<h1 style='color:white;text-align:center;margin-top:20%'>Access Denied</h1>";
   throw new Error("Unauthorized access blocked.");
